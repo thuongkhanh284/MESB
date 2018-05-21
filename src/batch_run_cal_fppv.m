@@ -39,7 +39,7 @@ for dir_index = 3: 3
     Res = Res{3}; % set this for normal test : 30/70 - 50/50 - 70/30
     param.type = 1;
     % process the the function to calculate FPPV
-    detcurve = cal_det_curve_fppv_by_macro_ave(Res, param);
+    detcurve = cal_f1_curve_fppv_by_micro_ave(Res, param);
     detcurve.yaxis;
     detcurve.dataname = file_name
     
