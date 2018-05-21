@@ -22,6 +22,7 @@ num_test_video = size(Res.test_index,2);
 % HERE: The number of FP vector.
 %method 1
 num_fp_array = [1:(num_test_video), num_test_video*5 , num_test_video*10 ];
+TPR_rate = 0.1:0.1:0.9;
  %method 2 : number of each FP vector
 % num_fp_array = [floor(0.1*num_test_video),  , floor(0.5*num_test_video) ];
  
@@ -70,17 +71,18 @@ for (cross_id = 1: num_cross)
 %     neg_sorted_score = sorted_score_array(idneg);
     
     list_video = sort(unique(test_video)); 
-    %INITIALIZE MissRate
-    MissRate = zeros(1,length(num_fp_array)) - 1;
-    Recall = zeros(1,length(num_fp_array)) - 1;
-    Precision = zeros(1,length(num_fp_array))  - 1 ;
+    
     % calculate the number of Postiive Sample
 
     num_POS_ME = sum(fiXLS(list_video,14));% number of Positive Ground Truth
     num_video = length(list_video); % number of video in test set
-    
+    num_tp_array = floor (TPR_rate *  num_POS_ME);
     %num_fp_array = floor (param.XAxis * num_video);
     
+    %INITIALIZE MissRate
+    MissRate = zeros(1,length(num_tp_array));
+    Recall = zeros(1,length(num_tp_array)) ;
+    Precision = zeros(1,length(num_tp_array));
 
     num_window = length(sorted_score_array); % number of test sample
     %num_neg_window = length(neg_sorted_score);
@@ -127,7 +129,7 @@ for (cross_id = 1: num_cross)
             % using Non Maxima Suppression      
             % 
             %option 1
-            top_window = fast_nms(window_one_video , 0.5) ;
+            top_window = fast_nms2(window_one_video , 0.5) ;
             % option 2
             %top_window = fast_nms2(window_one_video , 0.5) ;
             
@@ -189,8 +191,8 @@ for (cross_id = 1: num_cross)
         % corresponded position of FP quantity.
         
         
-        if (any(num_fp_array == FP) == 1)
-            id_fp = find(FP == num_fp_array );
+        if (any(num_tp_array == TP) == 1)
+            id_fp = find(TP == num_tp_array );
             
             MissRate(id_fp) = 1 - (TP/ num_POS_ME); % MissRate = 1 - True Positive Rate
             Recall(id_fp) = double(TP) /num_POS_ME;
@@ -220,7 +222,7 @@ for (cross_id = 1: num_cross)
 end
 
 toc
-detcurve.xaxis = mean(Recall);
+detcurve.xaxis = mean(Recall_Arr);
 F1_score_array = (2 * Precision_Arr.* Recall_Arr) ./ (Precision_Arr + Recall_Arr);
 % there are -1 in some cross: remove calculate -1 in each 
 detcurve.yaxis = mean(F1_score_array);

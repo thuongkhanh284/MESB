@@ -21,7 +21,9 @@ num_cross = length(DEC);
 num_test_video = size(Res.test_index,2);
 % HERE: The number of FP vector.
 %method 1
-num_fp_array = [1:(num_test_video), num_test_video*5 , num_test_video*10 ];
+num_fp_array = [1:(num_test_video) ];
+TPR_rate = 0.1:0.1:0.9;
+
  %method 2 : number of each FP vector
 % num_fp_array = [floor(0.1*num_test_video),  , floor(0.5*num_test_video) ];
  
@@ -44,7 +46,7 @@ tp_thr = []; % debug vars
 tic
 for (cross_id = 1: num_cross)
     
-
+    
     %test_index = Res.test_index(cross_id , :); % video index of test set
     scale_array = Res.test_scale{cross_id}; % vector
     score_array = Res.DEC{cross_id}'; % score vector of each cross validation
@@ -83,13 +85,14 @@ for (cross_id = 1: num_cross)
 
     num_POS_ME = sum(fiXLS(list_video,14));% number of Positive Ground Truth
     num_video = length(list_video); % number of video in test set
-    
+    num_tp_array = floor (TPR_rate *  num_POS_ME);
     %num_fp_array = floor (param.XAxis * num_video);
     
 
     num_window = length(sorted_score_array); % number of test sample
     %num_neg_window = length(neg_sorted_score);
     tp_thr = [];
+
     for ( i= num_window:-1:1)
     %for ( i= num_window:-1:1 )
         threshold_val = sorted_score_array(i);
@@ -132,7 +135,7 @@ for (cross_id = 1: num_cross)
             % using Non Maxima Suppression      
             % 
             %option 1
-            top_window = fast_nms(window_one_video , 0.5) ;
+            top_window = fast_nms2(window_one_video , 0.5) ;
             % option 2
             %top_window = fast_nms2(window_one_video , 0.5) ;
             
@@ -186,7 +189,7 @@ for (cross_id = 1: num_cross)
             TP = TP + TP_onevideo;
             % minus the total detected window with TP_Onevideo to obtain FP
             FP = FP + size(top_window,1) - TP_onevideo;
-            FN = FN + FN_onevideo;
+            
            
         end
         
@@ -194,13 +197,13 @@ for (cross_id = 1: num_cross)
         % corresponded position of FP quantity.
         
         
-        if (any(num_fp_array == TP) == 1)
-            id_fp = find(TP == num_fp_array );
+        if (any(num_tp_array == TP) == 1)
+            id_fp = find(TP == num_tp_array );
             
             MissRate(id_fp) = 1 - (TP/ num_POS_ME); % MissRate = 1 - True Positive Rate
-            TP_array(id_fp) = TP;
-            FN_array(id_fp) = FN;
-            FP_array(id_fp) = FP;
+            TP_array(id_fp) =  TP;
+            FN_array(id_fp) =  num_POS_ME - TP;
+            FP_array(id_fp) =  FP;
         end
         
         % this code is used to debug
@@ -224,7 +227,9 @@ for (cross_id = 1: num_cross)
     FN_crosses = [FN_crosses ; FN_array];   
 
 end
-
+FP_crosses
+TP_crosses
+FN_crosses
 toc
 TP_crosses = sum(TP_crosses);
 FP_crosses = sum(FP_crosses);
